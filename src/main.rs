@@ -1,48 +1,27 @@
 use io_uring::{opcode, types, IoUring};
 use std::os::unix::io::AsRawFd;
 use std::{fs, io};
+use clap::{App, Arg};
+
 mod cat;
+mod read_readme;
 
 fn main() -> io::Result<()> {
-    /*
+    let matches = App::new("io_uring experiments")
+        .version("0.0.1")
+        .about("explore the io_uring interface")
+        .arg(
+            Arg::with_name("files")
+                .multiple(true)
+                .required(true)
+                .help("Files to read"),
+        )
+        .get_matches();
+
+    let files: Vec<&str> = matches.values_of("files").unwrap().collect();
     let mut ring = IoUring::new(8)?;
 
-    let fd = fs::File::open("README.md")?;
-    let mut buf = vec![0; 1024];
-
-    let read_e = opcode::Read::new(types::Fd(fd.as_raw_fd()), buf.as_mut_ptr(), buf.len() as _)
-        .build()
-        .user_data(0x42);
-
-    // Note that the developer needs to ensure
-    // that the entry pushed into submission queue is valid (e.g. fd, buffer).
-    unsafe {
-        ring.submission()
-            .push(&read_e)
-            .expect("submission queue is full");
-    }
-
-    ring.submit_and_wait(1)?;
-
-    let cqe = ring.completion().next().expect("completion queue is empty");
-
-    assert_eq!(cqe.user_data(), 0x42);
-    assert!(cqe.result() >= 0, "read error: {}", cqe.result());
-
-
-    Ok(())
-
-    */
-
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: {} [file name] <[file name] ...>", args[0]);
-        return Ok(());
-    }
-
-    let mut ring = IoUring::new(8)?;
-
-    for file_path in &args[1..] {
+    for file_path in &files {
         submit_read_request(file_path, &mut ring)?;
         get_completion_and_print(&mut ring)?;
     }
