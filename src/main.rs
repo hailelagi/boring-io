@@ -1,8 +1,10 @@
 use io_uring::{opcode, types, IoUring};
 use std::os::unix::io::AsRawFd;
 use std::{fs, io};
+mod cat;
 
 fn main() -> io::Result<()> {
+    /*
     let mut ring = IoUring::new(8)?;
 
     let fd = fs::File::open("README.md")?;
@@ -29,5 +31,21 @@ fn main() -> io::Result<()> {
 
 
     Ok(())
-}
 
+    */
+
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Usage: {} [file name] <[file name] ...>", args[0]);
+        return Ok(());
+    }
+
+    let mut ring = IoUring::new(QUEUE_DEPTH)?;
+
+    for file_path in &args[1..] {
+        submit_read_request(file_path, &mut ring)?;
+        get_completion_and_print(&mut ring)?;
+    }
+
+    Ok(())
+}
