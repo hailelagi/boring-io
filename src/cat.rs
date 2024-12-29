@@ -7,8 +7,7 @@ use libc::iovec;
 use std::ptr;
 use std::slice;
 
-const QUEUE_DEPTH: u32 = 1;
-const BLOCK_SZ: usize = 1024;
+const BLOCK_SIZE: usize = 1024;
 
 struct FileInfo {
     file_sz: u64,
@@ -33,7 +32,7 @@ fn get_completion_and_print(ring: &mut IoUring) -> io::Result<()> {
     }
 
     let fi: &FileInfo = unsafe { &*(cqe.user_data() as *const FileInfo) };
-    let blocks = (fi.file_sz as usize + BLOCK_SZ - 1) / BLOCK_SZ;
+    let blocks = (fi.file_sz as usize + BLOCK_SIZE - 1) / BLOCK_SIZE;
     for i in 0..blocks {
         let iovec = &fi.iovecs[i];
         let buf = unsafe { slice::from_raw_parts(iovec.iov_base as *const u8, iovec.iov_len) };
@@ -50,7 +49,7 @@ fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
     let mut bytes_remaining = file_sz;
     let mut offset = 0;
     let mut current_block = 0;
-    let blocks = (file_sz as usize + BLOCK_SZ - 1) / BLOCK_SZ;
+    let blocks = (file_sz as usize + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     let mut fi = FileInfo {
         file_sz,
@@ -58,8 +57,8 @@ fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
     };
 
     while bytes_remaining > 0 {
-        let bytes_to_read = std::cmp::min(bytes_remaining, BLOCK_SZ as u64);
-        let layout = Layout::from_size_align(BLOCK_SZ, BLOCK_SZ).unwrap();
+        let bytes_to_read = std::cmp::min(bytes_remaining, BLOCK_SIZE as u64);
+        let layout = Layout::from_size_align(BLOCK_SIZE, BLOCK_SIZE).unwrap();
         let buf = unsafe { alloc(layout) };
 
         fi.iovecs.push(iovec {

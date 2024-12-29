@@ -40,7 +40,7 @@ fn main() -> io::Result<()> {
         return Ok(());
     }
 
-    let mut ring = IoUring::new(QUEUE_DEPTH)?;
+    let mut ring = IoUring::new(8)?;
 
     for file_path in &args[1..] {
         submit_read_request(file_path, &mut ring)?;
