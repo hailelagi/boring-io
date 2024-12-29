@@ -1,16 +1,14 @@
-use io_uring::{cqueue, opcode, squeue, IoUring};
-use std::alloc::{alloc, Layout};
-use std::fs::File;
-use std::io::{self, Read, Write};
-use std::os::unix::io::AsRawFd;
-use libc::iovec;
-use std::ptr;
-use std::slice;
+use io_uring::types;
+use io_uring::{opcode, IoUring};
 
-fn read_readme() -> Result<(), _> {
+use std::fs::File;
+use std::io::Error;
+use std::os::unix::io::AsRawFd;
+
+fn read_readme() -> Result<(), Error> {
     let mut ring = IoUring::new(8)?;
 
-    let fd = fs::File::open("README.md")?;
+    let fd = File::open("README.md")?;
     let mut buf = vec![0; 1024];
 
     let read_e = opcode::Read::new(types::Fd(fd.as_raw_fd()), buf.as_mut_ptr(), buf.len() as _)
@@ -31,7 +29,6 @@ fn read_readme() -> Result<(), _> {
 
     assert_eq!(cqe.user_data(), 0x42);
     assert!(cqe.result() >= 0, "read error: {}", cqe.result());
-
 
     Ok(())
 }

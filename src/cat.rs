@@ -1,9 +1,9 @@
 use io_uring::{cqueue, opcode, squeue, IoUring};
+use libc::iovec;
 use std::alloc::{alloc, Layout};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::os::unix::io::AsRawFd;
-use libc::iovec;
 use std::ptr;
 use std::slice;
 
@@ -23,8 +23,10 @@ fn output_to_console(buf: &[u8]) {
     io::stdout().write_all(buf).unwrap();
 }
 
-fn get_completion_and_print(ring: &mut IoUring) -> io::Result<()> {
+/*
+pub fn get_completion_and_print(ring: &mut IoUring) -> io::Result<()> {
     let cqe = ring.wait_for_cqe()?;
+    let cqe = ring.submission()
     let res = cqe.result();
     if res < 0 {
         eprintln!("Async readv failed.");
@@ -43,7 +45,7 @@ fn get_completion_and_print(ring: &mut IoUring) -> io::Result<()> {
     Ok(())
 }
 
-fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
+pub fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
     let file = File::open(file_path)?;
     let file_sz = get_file_size(&file)?;
     let mut bytes_remaining = file_sz;
@@ -87,3 +89,4 @@ fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
     ring.submit()?;
     Ok(())
 }
+*/

@@ -1,30 +1,38 @@
-use io_uring::{opcode, types, IoUring};
-use std::os::unix::io::AsRawFd;
-use std::{fs, io};
-use clap::{App, Arg};
+use clap::{value_parser, Arg, ArgAction, Command};
+use io_uring::IoUring;
+use std::io;
 
 mod cat;
 mod read_readme;
 
+// use crate::cat::{get_completion_and_print, submit_read_request};
+
 fn main() -> io::Result<()> {
-    let matches = App::new("io_uring experiments")
-        .version("0.0.1")
-        .about("explore the io_uring interface")
+    let m = Command::new("io_uring experiments")
         .arg(
-            Arg::with_name("files")
-                .multiple(true)
-                .required(true)
-                .help("Files to read"),
+            Arg::new("file")
+                .action(ArgAction::Append)
+                .value_parser(value_parser!(String))
+                .short('f')
+                .required(true),
         )
-        .get_matches();
+        .get_matches_from(vec!["file"]);
 
-    let files: Vec<&str> = matches.values_of("files").unwrap().collect();
-    let mut ring = IoUring::new(8)?;
+    let files: Vec<&str> = m
+        .get_many::<String>("files")
+        .expect("kitty cat")
+        .map(|s: &_| s.as_str())
+        .collect();
 
+    let mut rq = IoUring::new(8)?;
+    let mut cq = IoUring::new(8)?;
+
+    /*
     for file_path in &files {
-        submit_read_request(file_path, &mut ring)?;
-        get_completion_and_print(&mut ring)?;
+        submit_read_request(file_path, &mut rq)?;
+        get_completion_and_print(&mut cq)?;
     }
+    */
 
     Ok(())
 }
