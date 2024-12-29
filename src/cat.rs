@@ -1,8 +1,9 @@
 use io_uring::{cqueue, opcode, squeue, IoUring};
 use std::alloc::{alloc, Layout};
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::os::unix::io::AsRawFd;
+use libc::iovec;
 use std::ptr;
 use std::slice;
 
@@ -11,7 +12,7 @@ const BLOCK_SZ: usize = 1024;
 
 struct FileInfo {
     file_sz: u64,
-    iovecs: Vec<libc::iovec>,
+    iovecs: Vec<iovec>,
 }
 
 fn get_file_size(file: &File) -> io::Result<u64> {
@@ -61,7 +62,7 @@ fn submit_read_request(file_path: &str, ring: &mut IoUring) -> io::Result<()> {
         let layout = Layout::from_size_align(BLOCK_SZ, BLOCK_SZ).unwrap();
         let buf = unsafe { alloc(layout) };
 
-        fi.iovecs.push(libc::iovec {
+        fi.iovecs.push(iovec {
             iov_base: buf as *mut _,
             iov_len: bytes_to_read as usize,
         });
